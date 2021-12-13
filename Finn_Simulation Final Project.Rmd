@@ -2,12 +2,12 @@
 title: "Expected Financial Outcomes of Residential Solar Projects in Iowa"
 subtitle: "Simulation Final Project"
 author: "Sean Finn"
-date: "Due 12/13/2021"
+date: "December 13, 2021"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 library(tidyverse)
 library(gganimate)
 library(egg)
@@ -405,7 +405,7 @@ Both functions have certain inputs that are required, with no defaults. Besides 
 
 The first default, kWh per panel, is one of only two that are static in both functions. The default for this input is set to 45, which corresponds to 300 watt panels getting an average of 5 hours of sun per day each month, a typical calculation for solar projects^[https://news.energysage.com/what-is-the-power-output-of-a-solar-panel/]. Although this can vary depending on the type of solar panels purchased, the wattage rating of the panels does not change over time, and thus is a static input for all scenarios. Similarly, the starting price per kWh charged by the utility company will be different depending on where you live, but that initial rate is also a static value. In this case, the starting price per kWh is set to 8.83 cents because that is the average price for Iowa City^[https://www.electricitylocal.com/states/iowa/iowa-city/].
 
-The six remaining inputs have both static and distributed default values. See the histogram plots below for a visualization of the default distributions for these inputs (**Figure 1**). Starting with annual solar panel owner costs, there is significant room for variation in yearly fees. Standard advice is to budget $400 per year for solar panel inspection and maintenance^[https://www.fixr.com/costs/solar-panel-maintenance#:~:text=Solar%20Panel%20Cleaning%20Cost%20The%20average%20cost%20to,with%2010%20panels%2C%20expect%20to%20pay%20between%20%24150-%24330.], with a typical range given of \$150-\$1000 annually. In the second version of the function, I assigned this yearly costs variable a normal distribution with a mean of 400 and standard deviation of 50, so that most sampled values fell between \$300-500. 
+The six remaining inputs have both static and distributed default values. See the histogram plots below for a visualization of the default distributions for these inputs (**Figure 1**). Starting with annual solar panel owner costs, there is significant room for variation in yearly fees. Standard advice is to budget $400 per year for solar panel inspection and maintenance^[https://www.fixr.com/costs/solar-panel-maintenance], with a typical range given of \$150-\$1000 annually. In the second version of the function, I assigned this yearly costs variable a normal distribution with a mean of 400 and standard deviation of 50, so that most sampled values fell between \$300-500. 
 
 Each year, there is some chance that the solar panels will be damaged. Although there is no readily available data on how common solar panel damage is, it is widely reported that solar panels are quite durable. Therefore I assigned the default for the annual probability of damage to be 0.5%, and for the distribution I assigned it a Bernoulli distribution (binomial with size=1) with $p=0.005$. In the case that the panels are damaged, there is an array of possible repairs needed. Based on online resources, I found that most solar panels repairs are relatively inexpensive, with a few more extreme cases costing much more^[https://www.fixr.com/costs/solar-panel-maintenance#solar-panel-repair-cost]. With this in mind, I set the default repair cost to \$2000 and assigned it an exponential distribution with a rate of $\lambda = 0.0005$. 
 
@@ -413,7 +413,7 @@ Over time, solar panels lose efficiency due to aging and exposure. However, this
 
 Changes in price per kWh charged by the utility provider can make a significant difference in cost savings over time, as increases in price essentially add value to the solar panels. Looking at the history of energy prices in Iowa, it is clear that changes are anything but steady, with increases ranging from practically zero to 10% in a single year^[https://ballotpedia.org/Historical_state_electricity_prices]. Based on this history, the default change in price per kWh is set to 0.3% and is it given an exponential distribution with a rate of $\lambda = 50$. Finally, monthly energy usage is another factor with notable variance from month to month and year to year. Typical homes will use an average of 900 kWh per month, so this is the default value for the variable. In the second function, this variable is assigned a normal distribution with a mean of 900 and standard deviation of 200^[https://www.consumeraffairs.com/solar-energy/how-much-do-solar-panels-cost.html]. 
 
-```{r define.input.distributions}
+```{r define.input.distributions, fig.cap="**Figure 1.** Assigned default distributions of solar project inputs"}
 yearly.costs  <- rnorm(10000, mean=400, sd=50)
 prop.effloss  <- rnorm(10000, mean=0.0065, sd=0.001)
 prob.damage   <- rbinom(10000, size=1, prob=0.005)
@@ -436,6 +436,9 @@ hist(prob.damage, main = "Histogram of Probability \nof Damage Occurring",
      xlab = "Probability of Damage to Panels", col = "purple", )
 ```
 
+<br>
+
+
 #### Function processes and simulations
 
 Much of the operations within the solar project functions are rather intuitive. The function initializes a list of variables to track, including return on investment (ROI), net return, loan balance, amount saved, and other such factors necessary for calculating those figures. After performing some checks, assigning internal-use objects, and initializing tracking variables, the function moves on to its main procedure: the yearly updating of project details. In this loop that continues as many times as is specified in the function input, the function calculates loan principal and interest payments using a standard amortization schedule^[https://www.vertex42.com/ExcelArticles/amortization-calculation.html] and uses the inputs to track changes in panel efficiency, utility energy rates, costs due to damage, and its financial indicators. 
@@ -450,7 +453,7 @@ Next, I wanted to test how sensitive the results were to assumptions made about 
 
 To begin with, we can see the results from the "point-estimate" version of the function that had static default values for the solar project. According to this model, someone investing in a solar project in Iowa can expect to break even on their investment at the 13 or 14 year mark, depending on whether they take out a loan to pursue the project. This is curiously lower than estimated on most websites, which usually estimate a break-even point of 10 years as a maximum. In **Figure 3**, you can clearly see the savings stack up over each year, even as the annual amount saved slightly decreases over time due to the loss of efficiency.
 
-```{r plotting.static.input.ROI, fig.cap="Figure 2. ROI for typical $10k solar project in Iowa"}
+```{r plotting.static.input.ROI, fig.cap="**Figure 2.** ROI for typical $10k solar project in Iowa"}
 single.ROI <- ggplot(data = test2, aes(years, ROI)) +
     geom_abline(intercept = 0, slope = 0, col = "blue", linetype = 2) +
     geom_line() +
@@ -468,7 +471,10 @@ single.ROI2 <- ggplot(data = test1, aes(years, ROI)) +
 ggarrange(single.ROI, single.ROI2, ncol = 2)
 ```
 
-```{r plotting.static.input.net, fig.cap="Figure 3. Net return for typical $10k solar project in Iowa"}
+<br>
+
+
+```{r plotting.static.input.net, fig.cap="**Figure 3.** Net return for typical $10k solar project in Iowa"}
 single.net <- ggplot(data = test2, aes(years, net)) +
     geom_abline(intercept = 0, slope = 0, col = "blue", linetype = 2) +
     geom_line() +
@@ -488,7 +494,10 @@ single.net2 <- ggplot(data = test1, aes(years, net)) +
 ggarrange(single.net, single.net2, ncol = 2)
 ```
 
-```{r plotting.static.input.moneysaved, fig.cap="Figure 4. Amount saved for typical $10k solar project in Iowa"}
+<br>
+
+
+```{r plotting.static.input.moneysaved, fig.cap="**Figure 4.** Amount saved for typical $10k solar project in Iowa"}
 single.ecosts <- ggplot(data = test2[-1,], aes(years, annual.amount.saved)) +
     geom_col(width = 1, color = "black", fill = "palegreen4") +
     scale_y_continuous(limits = c(0,1500)) +
@@ -510,6 +519,9 @@ ggarrange(single.ecosts, single.ecosts2, ncol = 2)
 
 ```
 
+<br>
+
+
 While interesting, these results do not provide more insight than that online sources may be too optimistic about the financial benefits of investing in solar panels. To better model these projects and account for their inherent unpredictability, we turn to the second version of the function with the distribution defaults. In first simulation, the same projects are compared but with attention to the variance in outcomes.
 
 ### Partial energy coverage project
@@ -517,7 +529,6 @@ While interesting, these results do not provide more insight than that online so
 The average Iowan undertaking a $10,000 solar panel project will not break even within the first 30 years. For the given inputs, 95% of Iowans paying cash for such a project would experience a return on investment of between -19.76% and 11.05% after 30 years, with a mean ROI of -4.58%. That corresponds to a net return between -\$4,995 and \$2,418 with a mean of -\$1,066. For the small proportion that do manage to break even with this type of project, the break even point should not be expected before 25 years after investing. This does not bode well for those interested in smaller residential solar projects. However, the tune changes when a slightly larger project is undertaken.
 
 ```{r 10k.project}
-start <- Sys.time()
 nsims <- 10000
 sim.loan.ROIs <- rep(NA, nsims)
 sim.cash.ROIs <- rep(NA, nsims)
@@ -541,16 +552,14 @@ for(i in 1:nsims) {
   cash.years.til.BE[i] <- proj$years[which.max(proj$net >= 0)]
   sim.cash.nets[i] <- proj$net[31]
 }
-end <- Sys.time()
-print(end - start)
 ```
 
-```{r 10k.project.ROI, fig.cap="Figure 5. Financial figures for $10k solar panel project in Iowa"}
+```{r 10k.project.ROI, fig.cap="**Figure 5.** Financial figures for $10k solar panel project in Iowa"}
 ## ROI
-summary(sim.cash.ROIs)
-quantile(sim.cash.ROIs, c(0.025, 0.975))
-summary(sim.loan.ROIs)
-quantile(sim.loan.ROIs, c(0.025, 0.975))
+# summary(sim.cash.ROIs)
+# quantile(sim.cash.ROIs, c(0.025, 0.975))
+# summary(sim.loan.ROIs)
+# quantile(sim.loan.ROIs, c(0.025, 0.975))
 
 ROIs <- data.frame(investment.type = as.factor(c(rep("Cash", nsims), 
                                                  rep("Loan (5-year)", nsims))),
@@ -563,10 +572,10 @@ simplot.ROI <- ggplot(data = ROIs, aes(investment.type, ROI)) +
   theme_minimal()
 
 ## Net return
-summary(sim.cash.nets)
-quantile(sim.cash.nets, c(0.025, 0.975))
-summary(sim.loan.nets)
-quantile(sim.loan.nets, c(0.025, 0.975))
+# summary(sim.cash.nets)
+# quantile(sim.cash.nets, c(0.025, 0.975))
+# summary(sim.loan.nets)
+# quantile(sim.loan.nets, c(0.025, 0.975))
 
 nets <- data.frame(investment.type = as.factor(c(rep("Cash", nsims), 
                                                  rep("Loan (5-year)", nsims))),
@@ -579,10 +588,10 @@ simplot.net <- ggplot(data = nets, aes(investment.type, net)) +
   theme_minimal()
 
 ## Break even point
-summary(loan.years.til.BE)
-quantile(loan.years.til.BE, c(0.025, 0.975))
-summary(cash.years.til.BE)
-quantile(cash.years.til.BE, c(0.025, 0.975))
+# summary(loan.years.til.BE)
+# quantile(loan.years.til.BE, c(0.025, 0.975))
+# summary(cash.years.til.BE)
+# quantile(cash.years.til.BE, c(0.025, 0.975))
 
 BEs <- data.frame(investment.type = as.factor(c(rep("Cash", nsims), 
                                                 rep("Loan (5-year)", nsims))),
@@ -596,17 +605,19 @@ simplot.BE <- ggplot(data = BEs, aes(investment.type, BE)) +
 
 ggarrange(simplot.ROI, simplot.net, simplot.BE, ncol = 3, 
           top = "30-Year Figures for $10k Solar Project by Investment Type",
-          bottom = "Investment Type")
+          bottom = "Investment Type\n")
 ```
+
+<br>
+
 
 ### Full energy coverage project
 
-An additional \$5,000 in start-up money can make a huge difference. On average \$15,000 is what is takes to set up a residential solar panel system that covers 100% of the home's monthly energy usage. By switching to solar, the annual energy savings would allow for the average Iowan to break even at the 20-year mark for a cash-only project and at the 21-year mark for a loan-only project. For those who take on this project out of pocket, 95% would experience an ROI between 23.1% and 65.7% (\$6,720 - \$17,715 net return) after 30 years with an average ROI of 42.9% (\$11,654). 
+An additional \$5,000 in start-up money can make a huge difference. On average, \$15,000 is what is required to set up a residential solar panel system that covers 100% of the home's monthly energy usage. By switching to solar, the annual energy savings would allow for the average Iowan to break even at the 20-year mark for a cash-only project and at the 21-year mark for a loan-only project. For those who take on this project out of pocket, 95% would experience an ROI between 23.1% and 65.7% (\$6,720 - \$17,715 net return) after 30 years with an average ROI of 42.9% (\$11,654). 
 
 For Iowans taking the loan route, 95% would experience an ROI between 16.5% and 56.4% (\$5,075 - \$16,053), averaging 35.3% (\$10,101) at 30 years. While there is a small chance to have bad luck and never break even, the probability of that happening is less than 0.1%, and 95% of people taking on projects like this will break even between 17 and 25 years after investing in the project.
 
-```{r 15k.project, fig.cap="Figure 6. Financial figures for $15k solar panel project in Iowa"}
-start <- Sys.time()
+```{r 15k.project, fig.cap="**Figure 6.** Financial figures for $15k solar panel project in Iowa"}
 nsims <- 10000
 sim.loan.ROIs <- rep(NA, nsims)
 sim.cash.ROIs <- rep(NA, nsims)
@@ -636,14 +647,12 @@ for(i in 1:nsims) {
   change.amount.saved[i] <- (proj$annual.amount.saved[31] - proj$annual.amount.saved[2])
   cash.years.til.BE[i] <- proj$years[which.max(proj$net >= 0)]
 }
-end <- Sys.time()
-print(end - start)
 
 ## ROI
-summary(sim.cash.ROIs)
-quantile(sim.cash.ROIs, c(0.025, 0.975))
-summary(sim.loan.ROIs)
-quantile(sim.loan.ROIs, c(0.025, 0.975))
+# summary(sim.cash.ROIs)
+# quantile(sim.cash.ROIs, c(0.025, 0.975))
+# summary(sim.loan.ROIs)
+# quantile(sim.loan.ROIs, c(0.025, 0.975))
 
 ROIs <- data.frame(investment.type = as.factor(c(rep("Cash", nsims), 
                                                  rep("Loan (5-year)", nsims))),
@@ -656,10 +665,10 @@ simplot.ROI <- ggplot(data = ROIs, aes(investment.type, ROI)) +
   theme_minimal()
 
 ## Net return
-summary(sim.cash.nets)
-quantile(sim.cash.nets, c(0.025, 0.975))
-summary(sim.loan.nets)
-quantile(sim.loan.nets, c(0.025, 0.975))
+# summary(sim.cash.nets)
+# quantile(sim.cash.nets, c(0.025, 0.975))
+# summary(sim.loan.nets)
+# quantile(sim.loan.nets, c(0.025, 0.975))
 
 nets <- data.frame(investment.type = as.factor(c(rep("Cash", nsims), 
                                                  rep("Loan (5-year)", nsims))),
@@ -672,10 +681,10 @@ simplot.net <- ggplot(data = nets, aes(investment.type, net)) +
   theme_minimal()
 
 ## Break even point
-summary(loan.years.til.BE)
-quantile(loan.years.til.BE, c(0.025, 0.975))
-summary(cash.years.til.BE)
-quantile(cash.years.til.BE, c(0.025, 0.975))
+# summary(loan.years.til.BE)
+# quantile(loan.years.til.BE, c(0.025, 0.975))
+# summary(cash.years.til.BE)
+# quantile(cash.years.til.BE, c(0.025, 0.975))
 
 BEs <- data.frame(investment.type = as.factor(c(rep("Cash", nsims), 
                                                 rep("Loan (5-year)", nsims))),
@@ -689,13 +698,15 @@ simplot.BE <- ggplot(data = BEs, aes(investment.type, BE)) +
 
 ggarrange(simplot.ROI, simplot.net, simplot.BE, ncol = 3, 
           top = "30-Year Figures for $15k Solar Project by Investment Type",
-          bottom = "Investment Type")
+          bottom = "Investment Type\n")
 ```
 
-These reported confidence intervals are possible because of the randomness embedded in the simulation function. They reflect the bad-, good-, and worst-case scenarios of taking on a residential solar project. In the next two figures (**Figures 7 and 8**), 100 of these individual projects are mapped out over the course of 30 years. Each project's corresponding ROI and net return is mapped on the y-axis. These figures illustrate how some projects go well and quickly pay themselves, while others face hurdles such as panel damages.
+<br>
 
-```{r 15k.project.ROI.animate, fig.cap="Figure 7. Progression of ROI for 100 $15k solar panel projects in Iowa"}
-start <- Sys.time()
+
+These reported confidence intervals are possible because of the randomness embedded in the simulation function. They reflect the bad-, good-, and worst-case scenarios of taking on a residential solar project. In the next two figures (**Figures 7 and 8**), 100 of these individual projects are mapped out over the course of 30 years. Each project's corresponding ROI and net return is mapped on the y-axis. These figures illustrate how some projects go well and quickly pay for themselves, while others face hurdles such as panel damages.
+
+```{r 15k.project.ROI.animate, fig.cap="**Figure 7.** Progression of ROI for 100 $15k solar panel projects in Iowa"}
 nsims <- 100
 sim.small.ROIs <- list()
 sim.small.nets <- list()
@@ -707,8 +718,6 @@ for(i in 1:nsims) {
   sim.small.ROIs[[i]] <- proj$ROI
   sim.small.nets[[i]] <- proj$net
 }
-end <- Sys.time()
-print(end - start)
 
 sim.animate <- data.frame(ROI = unlist(sim.small.ROIs),
                           Net = unlist(sim.small.nets),
@@ -721,36 +730,39 @@ simplot.ROI.a <- ggplot(sim.animate, aes(Year, ROI)) +
   geom_abline(slope = 0, intercept = 0, color = "green4") +
   labs(title = "Expected ROI for $15k Mixed-Funding Solar Project Over 30 Years") +
   transition_states(Rep) +
-  transition_reveal(Rep) + 
   transition_reveal(Year) +
   shadow_mark(color = "lightblue1", size = 0.25)
 simplot.ROI.a
 
-simplot.ROI.r <- ggplot(sim.animate, aes(Year, ROI)) +
-  geom_line(size = 0.25) + 
-  labs(title = "Expected ROI for $15k Mixed-Funding Solar Project Over 30 Years") +
-  theme_minimal()
-simplot.ROI.r
+# simplot.ROI.r <- ggplot(sim.animate, aes(Year, ROI)) +
+#   geom_line(size = 0.25) + 
+#   labs(title = "Expected ROI for $15k Mixed-Funding Solar Project Over 30 Years") +
+#   theme_minimal()
+# simplot.ROI.r
 ```
 
-```{r 15k.project.net.animate, fig.cap="Figure 8. Progression of net return for 100 $15k solar panel projects in Iowa"}
+<br>
+
+
+```{r 15k.project.net.animate, fig.cap="**Figure 8.** Progression of net return for 100 $15k solar panel projects in Iowa"}
 ## Net return
 simplot.net.a <- ggplot(sim.animate, aes(Year, Net)) +
   geom_line(aes(group = Rep)) + 
   labs(title = "Expected net return for $15k Mixed-Funding Solar Project Over 30 Years") +
   transition_states(Rep) +
-  transition_reveal(Rep) + 
   transition_reveal(Year) +
   shadow_mark(color = "palegreen", size = 0.25)
 simplot.net.a
 
-simplot.net.r <- ggplot(sim.animate, aes(Year, Net)) +
-  geom_line() + 
-  labs(title = "Expected net return for $15k Mixed-Funding Solar Project Over 30 Years") +
-  theme_minimal()
-simplot.net.r
-
+# simplot.net.r <- ggplot(sim.animate, aes(Year, Net)) +
+#   geom_line() + 
+#   labs(title = "Expected net return for $15k Mixed-Funding Solar Project Over 30 Years") +
+#   theme_minimal()
+# simplot.net.r
 ```
+
+<br>
+
 
 ### Sensitivity Analysis
 
@@ -760,8 +772,7 @@ Although this is a more optimistic picture than the \$10,000 project option, it 
 
 From **Figure 9** it is clear that decreasing or increasing the annual percent efficiency loss has a corresponding effect on the financial figures, but this effect is not particularly drastic. Even if the panels lost an average of 1% efficiency per year, well above the estimated loss rate, the break even year would only be pushed back by a year or two. Overall, this is a factor for which the default parameter does not make a largely meaningful difference.
 
-```{r sensitivity.analysis.effloss, fig.cap="Figure 9. Sensitivity of solar project to panel efficiency loss."}
-start <- Sys.time()
+```{r sensitivity.analysis.effloss, fig.cap="**Figure 9.** Sensitivity of solar project to panel efficiency loss."}
 props <- c(0.002, 0.005, 0.0065, 0.008, 0.01)
 nsims <- 10000
 sim.ROIs <- rep(NA, nsims*length(props))
@@ -782,12 +793,9 @@ for(i in 1:nsims) {
   
 } # End proportion efficiency loss loop
 
-end <- Sys.time()
-print(end - start)
-
 ## ROI
-summary(sim.ROIs)
-quantile(sim.ROIs, c(0.025, 0.975))
+# summary(sim.ROIs)
+# quantile(sim.ROIs, c(0.025, 0.975))
 
 eff.ROIs <- data.frame(props = as.factor(rep(props, each = nsims)),
                        ROI = sim.ROIs)
@@ -799,8 +807,8 @@ eff.simplot.ROI <- ggplot(data = eff.ROIs, aes(props, ROI)) +
   theme_minimal()
 
 ## Net return
-summary(sim.nets)
-quantile(sim.nets, c(0.025, 0.975))
+# summary(sim.nets)
+# quantile(sim.nets, c(0.025, 0.975))
 
 eff.nets <- data.frame(props = as.factor(rep(props, each = nsims)),
                        net = sim.nets)
@@ -812,8 +820,8 @@ eff.simplot.net <- ggplot(data = eff.nets, aes(props, net)) +
   theme_minimal()
 
 ## Break even point
-summary(sim.years.til.BE)
-quantile(sim.years.til.BE, c(0.025, 0.975))
+# summary(sim.years.til.BE)
+# quantile(sim.years.til.BE, c(0.025, 0.975))
 
 eff.BEs <- data.frame(props = as.factor(rep(props, each = nsims)),
                       BE = sim.years.til.BE)
@@ -826,16 +834,19 @@ eff.simplot.BE <- ggplot(data = eff.BEs, aes(props, BE)) +
 
 ggarrange(eff.simplot.ROI, eff.simplot.net, eff.simplot.BE, ncol = 3, 
           top = "30-Year Figures for $15k Mixed Funding Solar Project by Mean Annual Percent Efficiency Loss",
-          bottom = "Mean Annual Percent Efficiency Loss")
+          bottom = "Mean Annual Percent Efficiency Loss\n")
 ```
+
+<br>
+
 
 #### *Change in utility prices*
 
 A very unpredictable factor in this solar project simulation study is how much the price per kWh charged by utility providers will change over the next decades. The annual change figure may remain quite small, as it has in Iowa for the past decade, or it may increase dramatically as natural energy resources are used up. To test the projects' sensitivity to this factor, six different rate parameters (20, 30, 40, 50, 60, and 70) were chosen for the factor's exponential distribution. The exponential distribution fits well because, in any given year, the utility company is more likely to increase prices by a smaller percentage than a large one. 
 
-Before looking at the effects of these varying rates, it is helpful to visualize what these parameters look like for the exponential distribution. Note in **Figure 10** that when the parameter $\lambda = 20$, most annual percent increases are between 0% and 20%. This is scenario with quite dramatic energy price increases. On the other hand, when $\lambda = 70$, most annual percent increases are between 0% and 5%, which is more in line with the past decade of energy price changes in Iowa. Keep in mind that the lower parameter value corresponds to a higher rate of price increases.
+Before looking at the effects of these varying rates, it is helpful to visualize what these parameters look like for the exponential distribution. Note in **Figure 10** that when the parameter $\lambda = 20$, most annual percent increases are between 0% and 20%. This is a scenario with quite dramatic energy price increases. On the other hand, when $\lambda = 70$, most annual percent increases are between 0% and 5%, which is more in line with the past decade of energy price changes in Iowa. Keep in mind that the lower parameter value corresponds to a higher rate of price increases.
 
-```{r example.exp.distributions, fig.cap="Figure 10. Change in price per kWh distribution with range of parameter values"}
+```{r example.exp.distributions, fig.cap="**Figure 10.** Change in price per kWh distribution with range of parameter values"}
 ppkWh.change1 <- rexp(10000, rate=20)
 ppkWh.change2 <- rexp(10000, rate=30)
 ppkWh.change3 <- rexp(10000, rate=40)
@@ -853,10 +864,12 @@ hist(ppkWh.change5, main = NULL, xlab = "% increase in $/kWh (lambda=60)", col =
 hist(ppkWh.change6, main = NULL, xlab = "% increase in $/kWh (lambda=70)", col = "darkgreen")
 ```
 
-Immediately visible is the potential for ROI to be very large when the price of energy increases more quickly. When the rate is set to 50, the upper 95% bound for ROI is 59.1%, but when the rate is set to 20, the upper 95% bound for ROI is 232.1%. Increasing the parameter (decreasing the price increase rate) decreases ROI and net return to point, but towards the right side of the figure the outcomes distributions are squashed. This is because as the rate of price increases gets lower, the future prices are more predictable and closer to the current price. Therefore, these are more similar to calculating the same amount saved each year of owning the panels. Again, it is notable that the changes in this parameter value do not move the majority of the distributions below the break-even line.
+<br>
 
-```{r sensitivity.analysis.changeppkwh, fig.cap="Figure 11. Sensitivity of solar project to rates of changes in price per kWh"}
-start <- Sys.time()
+
+Immediately visible from **Figure 11** is the potential for ROI to be very large when the price of energy increases more quickly. When the rate is set to 50, the upper 95% bound for ROI is 59.1%, but when the rate is set to 20, the upper 95% bound for ROI is 232.1%. Increasing the parameter (decreasing the price increase rate) decreases ROI and net return to a point, but towards the right side of the figure the outcome distributions are squashed. This is because as the rate of price increases gets lower, the future prices are more predictable and closer to the current price. Therefore, these are more similar to calculating the same amount saved each year of owning the panels. Again, it is notable that the changes in this parameter value do not move the majority of the distributions below the break-even line.
+
+```{r sensitivity.analysis.changeppkwh, fig.cap="**Figure 11.** Sensitivity of solar project to rates of changes in price per kWh"}
 rates <- c(20, 30, 40, 50, 60, 70)
 nsims <- 10000
 sim.ROIs <- rep(NA, nsims*length(rates))
@@ -877,12 +890,9 @@ for(i in 1:nsims) {
   
 } # End energy price increase rate loop
 
-end <- Sys.time()
-print(end - start)
-
 ## ROI
-summary(sim.ROIs)
-quantile(sim.ROIs, c(0.025, 0.975))
+# summary(sim.ROIs)
+# quantile(sim.ROIs, c(0.025, 0.975))
 
 drate.ROIs <- data.frame(rates = as.factor(rep(rates, each = nsims)),
                        ROI = sim.ROIs)
@@ -894,8 +904,8 @@ drate.simplot.ROI <- ggplot(data = drate.ROIs, aes(rates, ROI)) +
   theme_minimal()
 
 ## Net return
-summary(sim.nets)
-quantile(sim.nets, c(0.025, 0.975))
+# summary(sim.nets)
+# quantile(sim.nets, c(0.025, 0.975))
 
 drate.nets <- data.frame(rates = as.factor(rep(rates, each = nsims)),
                        net = sim.nets)
@@ -907,8 +917,8 @@ drate.simplot.net <- ggplot(data = drate.nets, aes(rates, net)) +
   theme_minimal()
 
 ## Break even point
-summary(sim.years.til.BE)
-quantile(sim.years.til.BE, c(0.025, 0.975))
+# summary(sim.years.til.BE)
+# quantile(sim.years.til.BE, c(0.025, 0.975))
 
 drate.BEs <- data.frame(rates = as.factor(rep(rates, each = nsims)),
                       BE = sim.years.til.BE)
@@ -921,15 +931,17 @@ drate.simplot.BE <- ggplot(data = drate.BEs, aes(rates, BE)) +
 
 ggarrange(drate.simplot.ROI, drate.simplot.net, drate.simplot.BE, ncol = 3, 
           top = "30-Year Figures for $15k Mixed Funding Solar Project by Rate of Energy Price Increase",
-          bottom = "Rate of Energy Price Increase \n(exponential distibution lambda parameter)")
+          bottom = "Rate of Energy Price Increase \n(exponential distibution lambda parameter)\n")
 ```
+
+<br>
+
 
 #### *Yearly inspection and cleaning costs*
 
-Perhaps unsurprisingly, the yearly costs factor, which accounts for inspection and cleaning costs, is highly influential of the financial outcome for the solar project. For Iowans with the technical know-how and willingness to inspect and clean their solar panels themselves, a $0 yearly cost will result in a 30-year net return of \$17,736 - \$28,564 95% of the time. Spending the reportedly average \$400 per year on inspection and cleaning will decrease the expected 30-year net return by around \$12,000. If inspection and cleaning costs are high for a solar panel owner, and they pay an average of \$800 per year on those services, their expected ROI after 30 years dips below 0 and the probability of breaking even on the project by that point is only 28.7%. 
+Perhaps unsurprisingly, the yearly costs factor, which accounts for inspection and cleaning costs, is highly influential for the solar project's financial outcome. For Iowans with the technical know-how and willingness to inspect and clean their solar panels themselves, a $0 yearly cost will result in a 30-year net return of \$17,736 - \$28,564 95% of the time. Spending the reportedly average \$400 per year on inspection and cleaning will decrease the expected 30-year net return by around \$12,000. If inspection and cleaning costs are high for a solar panel owner, and they pay an average of \$800 per year on those services, their expected ROI after 30 years dips below 0 and the probability of breaking even on the project by that point is only 28.7%. 
 
-```{r sensitivity.analysis.costs, fig.cap="Figure 12. Sensitivity of solar project to annual service costs"}
-start <- Sys.time()
+```{r sensitivity.analysis.costs, fig.cap="**Figure 12.** Sensitivity of solar project to annual service costs"}
 costs <- c(0, 200, 400, 600, 800)
 nsims <- 10000
 sim.ROIs <- rep(NA, nsims*length(costs))
@@ -950,12 +962,9 @@ for(i in 1:nsims) {
   
 } # End energy price increase rate loop
 
-end <- Sys.time()
-print(end - start)
-
 ## ROI
-summary(sim.ROIs)
-quantile(sim.ROIs, c(0.025, 0.975))
+# summary(sim.ROIs)
+# quantile(sim.ROIs, c(0.025, 0.975))
 
 costs.ROIs <- data.frame(costs = as.factor(rep(costs, each = nsims)),
                        ROI = sim.ROIs)
@@ -967,8 +976,8 @@ costs.simplot.ROI <- ggplot(data = costs.ROIs, aes(costs, ROI)) +
   theme_minimal()
 
 ## Net return
-summary(sim.nets)
-quantile(sim.nets, c(0.025, 0.975))
+# summary(sim.nets)
+# quantile(sim.nets, c(0.025, 0.975))
 
 costs.nets <- data.frame(costs = as.factor(rep(costs, each = nsims)),
                        net = sim.nets)
@@ -980,8 +989,8 @@ costs.simplot.net <- ggplot(data = costs.nets, aes(costs, net)) +
   theme_minimal()
 
 ## Break even point
-summary(sim.years.til.BE)
-quantile(sim.years.til.BE, c(0.025, 0.975))
+# summary(sim.years.til.BE)
+# quantile(sim.years.til.BE, c(0.025, 0.975))
 
 costs.BEs <- data.frame(costs = as.factor(rep(costs, each = nsims)),
                         BE = sim.years.til.BE)
@@ -994,15 +1003,17 @@ costs.simplot.BE <- ggplot(data = costs.BEs, aes(costs, BE)) +
 
 ggarrange(costs.simplot.ROI, costs.simplot.net, costs.simplot.BE, ncol = 3, 
           top = "30-Year Figures for $15k Mixed Funding Solar Project by Expected Yearly Costs",
-          bottom = "Mean Annual Costs \n(normal distibution mu parameter)")
+          bottom = "Mean Annual Costs \n(normal distibution mu parameter)\n")
 ```
+
+<br>
+
 
 #### *Probability of system damage*
 
-Another highly variable factor when it comes to owning solar panels is the probability of experiencing damage to the system. Despite their general durability, solar panels are not immune to the various events that wreak havoc on households. This is particularly true in Iowa, where tornadoes, blizzards, hail storms, and even derechos (wind storms) can come when least expected. Although repair costs may set back solar panel owners in some years, the good news is that such costs are unlikely to completely derail a project in the long run. In a worst case scenario where heavy solar panel damage is occurring once every 5 years, the probability of breaking even on the project after 30 years dips down close to 50%. This seems unlikely, though, so for the most part the project outcome is not highly influenced by the assumed probability of damage.
+Another highly variable factor when it comes to owning solar panels is the probability of experiencing damage to the system. Despite their general durability, solar panels are not immune to the various events that wreak havoc on households. This is particularly true in Iowa, where tornadoes, blizzards, hail storms, and even derechos can come when least expected. Although repair costs may set back solar panel owners in some years, the good news is that such costs are unlikely to completely derail a project in the long run. In a worst case scenario where heavy solar panel damage is occurring once every 5 years, the probability of breaking even on the project after 30 years dips down close to 50%. This seems unlikely, though, so for the most part the project outcome is not highly influenced by the assumed probability of damage.
 
-```{r sensitivity.analysis.pdamage, fig.cap="Figure 13. Sensitivity of solar project to probability of system damage"}
-start <- Sys.time()
+```{r sensitivity.analysis.pdamage, fig.cap="**Figure 13.** Sensitivity of solar project to probability of system damage"}
 pdamages <- c(0.001, 0.005, 0.01, 0.05, 0.10, 0.2)
 nsims <- 10000
 sim.ROIs <- rep(NA, nsims*length(pdamages))
@@ -1023,12 +1034,9 @@ for(i in 1:nsims) {
   
 } # End energy price increase rate loop
 
-end <- Sys.time()
-print(end - start)
-
 ## ROI
-summary(sim.ROIs)
-quantile(sim.ROIs, c(0.025, 0.975))
+# summary(sim.ROIs)
+# quantile(sim.ROIs, c(0.025, 0.975))
 
 pdamages.ROIs <- data.frame(pdamages = as.factor(rep(pdamages, each = nsims)),
                        ROI = sim.ROIs)
@@ -1040,8 +1048,8 @@ pdamages.simplot.ROI <- ggplot(data = pdamages.ROIs, aes(pdamages, ROI)) +
   theme_minimal()
 
 ## Net return
-summary(sim.nets)
-quantile(sim.nets, c(0.025, 0.975))
+# summary(sim.nets)
+# quantile(sim.nets, c(0.025, 0.975))
 
 pdamages.nets <- data.frame(pdamages = as.factor(rep(pdamages, each = nsims)),
                        net = sim.nets)
@@ -1053,8 +1061,8 @@ pdamages.simplot.net <- ggplot(data = pdamages.nets, aes(pdamages, net)) +
   theme_minimal()
 
 ## Break even point
-summary(sim.years.til.BE)
-quantile(sim.years.til.BE, c(0.025, 0.975))
+# summary(sim.years.til.BE)
+# quantile(sim.years.til.BE, c(0.025, 0.975))
 
 pdamages.BEs <- data.frame(pdamages = as.factor(rep(pdamages, each = nsims)),
                         BE = sim.years.til.BE)
@@ -1067,17 +1075,19 @@ pdamages.simplot.BE <- ggplot(data = pdamages.BEs, aes(pdamages, BE)) +
 
 ggarrange(pdamages.simplot.ROI, pdamages.simplot.net, pdamages.simplot.BE, ncol = 3, 
           top = "30-Year Figures for $15k Mixed Funding Solar Project by Probability of Damage Occurring",
-          bottom = "Yearly Probability of Damage \n(binomial distibution p parameter)")
+          bottom = "Yearly Probability of Damage \n(binomial distibution p parameter)\n")
 ```
+
+<br>
+
 
 #### *Panel wattage*
 
-Websites about solar panel projects throw around various figures like "300 watts", "6.0 kW systems", and "$2.50 per watt," and yet the calculator will give you one simple number for number of years before breaking even or amount saved. Despite the implication that any solar panel array will pay itself off, **Figure 14** indicates how greatly the quality of the panel purchased can affect the financial outcomes of a solar project. 
+Websites about solar panel projects throw around various figures like "300 watts," "6.0 kW systems," and "$2.50 per watt," and yet the calculator will give you one simple number for amount saved or number of years before breaking even. Despite the implication that any solar panel array will pay itself off, **Figure 14** indicates how greatly the quality of the panel purchased can affect the financial outcomes of a solar project. 
 
-The U.S. Department of Energy reports that most panels on the market have rated wattages between 250-400, which corresponds to 37.5-60 kWh per month per panel. The function default of 45 kWh per month per panel represents 300 watt panels, comfortably within the standard margin. This range is more extreme than it appears, though. By spending their money on lower-end panels rated at 250 watts (37.5 kWh), 95% of Iowans would experience an ROI between -0.6% and 33.1% by year 30. Conversely, going with high-end panels rated at 400 watts (60 kWh) would result in a 30-year ROI between 58.7% and 113.6% in 95% of cases. This represents an average difference in net return of $19,513.
+The U.S. Department of Energy reports that most panels on the market have rated wattages between 250-400, which corresponds to 37.5-60 kWh per month per panel. The function default of 45 kWh per month per panel represents 300 watt panels, comfortably within the standard margin. This range is more extreme than it appears, though. By spending their money on lower-end panels rated at 250 watts (37.5 kWh), 95% of Iowans would experience an ROI between -0.6% and 33.1% by year 30. Conversely, going with high-end panels rated at 400 watts (60 kWh) would result in a 30-year ROI between 58.7% and 113.6% in 95% of cases. This represents an average difference in 30-year net return of $19,513.
 
-```{r sensitivity.analysis.panelquality, fig.cap="Figure 14. Sensitivity of solar project to quality of panels purchased"}
-start <- Sys.time()
+```{r sensitivity.analysis.panelquality, fig.cap="**Figure 14.** Sensitivity of solar project to quality of panels purchased"}
 watts <- c(37.5, 45, 52.5, 60, 67.5)
 nsims <- 10000
 sim.ROIs <- rep(NA, nsims*length(watts))
@@ -1098,12 +1108,9 @@ for(i in 1:nsims) {
   
 } # End panel kWh per month loop
 
-end <- Sys.time()
-print(end - start)
-
 ## ROI
-summary(sim.ROIs)
-quantile(sim.ROIs, c(0.025, 0.975))
+# summary(sim.ROIs)
+# quantile(sim.ROIs, c(0.025, 0.975))
 
 watts.ROIs <- data.frame(watts = as.factor(rep(watts, each = nsims)),
                        ROI = sim.ROIs)
@@ -1115,8 +1122,8 @@ watts.simplot.ROI <- ggplot(data = watts.ROIs, aes(watts, ROI)) +
   theme_minimal()
 
 ## Net return
-summary(sim.nets)
-quantile(sim.nets, c(0.025, 0.975))
+# summary(sim.nets)
+# quantile(sim.nets, c(0.025, 0.975))
 
 watts.nets <- data.frame(watts = as.factor(rep(watts, each = nsims)),
                        net = sim.nets)
@@ -1128,8 +1135,8 @@ watts.simplot.net <- ggplot(data = watts.nets, aes(watts, net)) +
   theme_minimal()
 
 ## Break even point
-summary(sim.years.til.BE)
-quantile(sim.years.til.BE, c(0.025, 0.975))
+# summary(sim.years.til.BE)
+# quantile(sim.years.til.BE, c(0.025, 0.975))
 
 watts.BEs <- data.frame(watts = as.factor(rep(watts, each = nsims)),
                         BE = sim.years.til.BE)
@@ -1142,8 +1149,11 @@ watts.simplot.BE <- ggplot(data = watts.BEs, aes(watts, BE)) +
 
 ggarrange(watts.simplot.ROI, watts.simplot.net, watts.simplot.BE, ncol = 3, 
           top = "30-Year Figures for $15k Mixed Funding Solar Project by Panel Wattage",
-          bottom = "Quality of panel in kWh per month")
+          bottom = "Quality of panel in kWh per month\n")
 ```
+
+<br>
+
 
 
 -------------------------
@@ -1156,7 +1166,7 @@ When considering whether to invest in a residential solar project, it is clear t
 
 Overall, there is no small degree of uncertainty when taking on such a project. With many unpredictable factors, a money-saving project can easily become a money sink instead. Given the same conditions as specified in the models above, with moderate yearly maintenance and mid-range 300W solar panels, Iowans spending \$15,000 on a solar project can expect to break even in 17-25 years. Keep in mind that this range is highly subject to the stated conditions. Given the right circumstances, a solar panel project may be a very sound financial investment.
 
-As stated earlier, this simulation does not take into account any sort of government tax breaks or assistance. Including government assistance would likely drive down costs considerably and make solar project investments much more advantageous. A future version of this model would include inputs for government assistance and tax incentives. Another factor that is left out of this simulation entirely is the environmental impact of energy usage. One great benefit of solar panels is the fact that they are environmentally friendly. This could be an interesting component for this simulation to include in the future.
+As stated earlier, this simulation does not take into account any sort of government tax breaks or assistance. Including government assistance would likely drive down net costs considerably and make solar project investments much more profitable. A future version of this model would include inputs for government assistance and tax incentives. Another factor that is left out of this simulation entirely is the environmental impact of energy usage. One great benefit of solar panels is the fact that they are environmentally friendly. This could be an interesting component for this simulation to include in the future.
 
 Finally, this model does not perfectly represent the year-to-year costs associated with solar projects. While adding too many inputs may make the simulation overly detailed, some more refinement could improve its results. There are details related to damage type, possibilities around paying off loans, month-to-month changes, and more that could be included. This model takes account of major aspects of the solar project process, but it is limited in these ways.
 
@@ -1165,4 +1175,4 @@ Finally, this model does not perfectly represent the year-to-year costs associat
 
 ## Appendix
 
-Link to code on GitHub: https://github.com/smfinn/solar 
+Link to code on GitHub: <https://github.com/smfinn/solar> 
